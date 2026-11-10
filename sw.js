@@ -1,5 +1,5 @@
 // Guarda o app no celular para abrir sem internet. Ao publicar versão nova, mude o número abaixo.
-const CACHE = 'gasolina-celular-1.0.0';
+const CACHE = 'gasolina-celular-1.0.1';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/logo.png',

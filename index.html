@@ -90,6 +90,8 @@ button{font:inherit;cursor:pointer}
   padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:5}
 .dock .in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
 .dock .btn{width:100%;font-size:1.02rem}
+.ask{display:flex;flex-direction:column;gap:8px;text-align:center}
+.ask-row{display:flex;gap:8px}.ask-row .btn{flex:1}
 .dock .msg{font-size:.82rem;color:var(--muted);text-align:center;min-height:1em}
 details summary{cursor:pointer;font-weight:600;padding:4px 0}
 details[open] summary{margin-bottom:8px}
@@ -174,6 +176,10 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;f
 
 <div class="dock">
   <div class="in">
+    <div class="ask" id="askBox" hidden>
+      <b>O arquivo foi salvo no OneDrive?</b>
+      <div class="ask-row"><button class="btn primary" id="btnYes">Sim, salvei</button><button class="btn" id="btnNo">Não salvei</button></div>
+    </div>
     <button class="btn brand" id="btnSend" disabled>Nada para enviar</button>
     <div class="msg" id="sendMsg"></div>
   </div>
@@ -183,7 +189,7 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;f
 <script>
 (function(){
 'use strict';
-const APPVER='1.0.0';
+const APPVER='1.0.1';
 const $=id=>document.getElementById(id);
 const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -280,7 +286,7 @@ function render(){
   else $('list').innerHTML=it.map(x=>{let th='<div class="noimg">sem<br>cupom</div>';
     if(x.foto&&x.fotoTipo==='img'){const u=URL.createObjectURL(x.foto);thumbUrls.push(u);th='<img src="'+u+'" alt="">'}else if(x.foto)th='<div class="noimg"><b>PDF</b></div>';
     const act=confirmId===x.id?'<span class="confirm">Excluir? <button class="link danger" data-a="del" data-id="'+x.id+'">Sim</button><button class="link" data-a="no">Não</button></span>'
-      :'<button class="link" data-a="edit" data-id="'+x.id+'">Editar</button><button class="link danger" data-a="ask" data-id="'+x.id+'">Excluir</button>';
+      :(x.enviado?'<button class="link" data-a="resend" data-id="'+x.id+'">Enviar de novo</button>':'')+'<button class="link" data-a="edit" data-id="'+x.id+'">Editar</button><button class="link danger" data-a="ask" data-id="'+x.id+'">Excluir</button>';
     return '<div class="item">'+th+'<div><div class="t">'+esc(x.posto)+'</div><div class="s num">'+br(x.data)+(x.litros?' · '+n2(x.litros,3)+' L':'')+(x.nf?' · NF '+esc(x.nf):'')+'</div>'+
       (x.enviado?'<span class="pill ok">Enviado '+new Date(x.enviado).toLocaleDateString('pt-BR')+'</span>':'<span class="pill pend">Falta enviar</span>')+'<div>'+act+'</div></div>'+
       '<div class="v num">'+brl(x.valor)+'</div></div>'}).join('');
@@ -288,7 +294,8 @@ function render(){
   updateDock();
 }
 $('list').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
-  if(a==='ask')confirmId=id;else if(a==='no')confirmId=null;
+  if(a==='resend'){const x=items.find(x=>x.id===id);if(x){x.enviado=null;await putItem(x);toast('Vai no próximo envio');prepareShare()}}
+  else if(a==='ask')confirmId=id;else if(a==='no')confirmId=null;
   else if(a==='del'){await delItem(id);items=items.filter(x=>x.id!==id);confirmId=null;if(editingId===id)resetForm();prepareShare()}
   else if(a==='edit'){const x=items.find(x=>x.id===id);if(!x)return;resetForm();editingId=id;
     $('iData').value=x.data;$('iPosto').value=x.posto;$('iComb').value=x.comb;$('iValor').value=n2(x.valor);$('iLitros').value=x.litros?n2(x.litros,3):'';$('iKm').value=x.km||'';$('iNf').value=x.nf||'';
@@ -316,20 +323,22 @@ async function prepareShare(){shareFile=null;updateDock();const p=pending();if(!
     return {file:new File([txt],name,{type:'text/plain'}),ids:p.map(x=>x.id)}})();
   preparing=job;const r=await job;if(preparing!==job)return;shareFile=r.file;shareIds=r.ids;updateDock()}
 async function markSent(ids){const now=new Date().toISOString();for(const x of items)if(ids.includes(x.id)){x.enviado=now;await putItem(x)}render();prepareShare()}
-let awaitingConfirm=false;
 $('btnSend').addEventListener('click',async()=>{if(!shareFile)return;const f=shareFile,ids=shareIds.slice();
-  if(awaitingConfirm){awaitingConfirm=false;await markSent(ids);$('sendMsg').textContent='Marcado como enviado. O computador importa ao abrir o programa.';return}
   const canFiles=navigator.canShare&&navigator.canShare({files:[f]});
   if(canFiles){
-    try{await navigator.share({files:[f],title:'Lançamentos de gasolina'});await markSent(ids);
-      $('sendMsg').textContent='Enviado. Confira se salvou na pasta do OneDrive.';toast('Enviado')}
+    try{await navigator.share({files:[f],title:'Lançamentos de gasolina'});askConfirm(ids)}
     catch(e){if(e&&e.name==='AbortError')$('sendMsg').textContent='Envio cancelado. Nada foi marcado como enviado.';
       else $('sendMsg').textContent='O celular não conseguiu compartilhar ('+(e&&e.message||e)+').'}
   }else{
     // navegador sem compartilhar arquivos: baixa o arquivo para salvar no OneDrive manualmente
     const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
-    awaitingConfirm=true;$('btnSend').textContent='Já salvei no OneDrive';$('sendMsg').textContent='Arquivo baixado. Mova-o para a pasta do OneDrive e toque no botão acima.'}
+    askConfirm(ids);$('sendMsg').textContent='Arquivo baixado. Mova-o para a pasta do OneDrive.'}
 });
+let askIds=null;
+function askConfirm(ids){askIds=ids;$('askBox').hidden=false;$('btnSend').hidden=true;$('sendMsg').textContent=''}
+function closeAsk(){askIds=null;$('askBox').hidden=true;$('btnSend').hidden=false}
+$('btnYes').addEventListener('click',async()=>{const ids=askIds||[];closeAsk();await markSent(ids);$('sendMsg').textContent='Marcado como enviado. O computador importa ao abrir o programa.';toast('Enviado')});
+$('btnNo').addEventListener('click',()=>{closeAsk();$('sendMsg').textContent='Tudo bem, os lançamentos continuam como "Falta enviar".'});
 
 // ---------- ajustes ----------
 function fillCfg(){$('cLim').value=n2(cfg.limite);$('cFech').value=cfg.fech}
