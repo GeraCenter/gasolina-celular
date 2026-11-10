@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gasolina Celular</title>
+<meta name="description" content="Lançamento de abastecimentos do cartão corporativo pelo celular">
+<meta name="theme-color" content="#f5b400">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gasolina">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+@font-face{font-family:'Barlow Semi Condensed';font-weight:600;font-display:swap;src:url(fonts/barlow-semi-condensed-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow Semi Condensed';font-weight:700;font-display:swap;src:url(fonts/barlow-semi-condensed-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Public Sans';font-weight:400;font-display:swap;src:url(fonts/public-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Public Sans';font-weight:600;font-display:swap;src:url(fonts/public-sans-latin-600-normal.woff2) format('woff2')}
+/* Layout: uma coluna para o polegar — resumo do ciclo, formulário, pendentes com o botão de envio fixo embaixo */
+:root{
+  --bg:#f5f4f0; --surface:#ffffff; --fg:#1d1d1b; --muted:#66655f; --line:#dedcd4; --soft:#f1efe7;
+  --accent:#3a3a37; --accent-fg:#ffffff; --brand:#f5b400; --amber:#e07b00; --danger:#b42318; --ok:#1f7a4a;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141413; --surface:#1e1e1c; --fg:#ecebe6; --muted:#a3a29a; --line:#33332f; --soft:#262623;
+  --accent:#f5b400; --accent-fg:#1d1d1b; --amber:#ff9a3c; --danger:#f2786d; --ok:#5cc58c; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding-top:12px}
+h1,h2{font-family:var(--f-display);margin:0;letter-spacing:.01em}
+h1{font-size:1.5rem;font-weight:700;line-height:1.1}
+h2{font-size:1.15rem;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.hint{font-size:.82rem;color:var(--muted)}
+header.top{display:flex;align-items:center;gap:12px}
+header.top .logo{background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px 8px;display:flex}
+header.top .logo img{height:36px;width:auto;display:block}
+header.top .ver{font-size:.72rem;color:var(--muted);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.cycle{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cycle .mid{text-align:center;flex:1}
+.cycle .mid b{display:block;font-family:var(--f-display);font-size:1.15rem}
+.cycle .mid span{font-size:.8rem;color:var(--muted)}
+.sq{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:1.3rem;font-weight:600}
+.bar{height:14px;border-radius:7px;background:var(--soft);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brand);width:0;transition:width .3s}
+.bar.over i{background:var(--danger)}
+.stats{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.stats b{font-family:var(--f-display);font-size:1.6rem;line-height:1}
+form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.full{grid-column:1/-1}
+input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;min-width:0;min-height:48px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+button{font:inherit;cursor:pointer}
+.btn{border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:12px 16px;font-weight:600;min-height:48px}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.brand{background:var(--brand);color:#1d1d1b;border-color:var(--brand)}
+.btn:disabled{opacity:.5}
+.link{border:none;background:none;color:var(--fg);text-decoration:underline;font-weight:600;padding:8px 4px}
+.link.danger{color:var(--danger)}
+.photo{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:12px}
+.photo .row{display:flex;gap:8px;flex-wrap:wrap}
+.photo .row .btn{flex:1 1 140px;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.photo .prev{display:flex;align-items:center;gap:10px}
+.photo .prev img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#fff}
+.photo .pdf{width:64px;height:64px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-family:var(--f-display)}
+.err{color:var(--danger);font-size:.88rem;min-height:1.2em}
+.actions{grid-column:1/-1;display:flex;gap:8px}
+.actions .btn{flex:1}
+.item{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:none}
+.item img,.item .noimg{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--soft);display:grid;place-items:center;font-size:.7rem;color:var(--muted);text-align:center}
+.item .t{font-weight:600;overflow-wrap:anywhere}
+.item .s{font-size:.82rem;color:var(--muted)}
+.item .v{text-align:right;font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;border:1px solid currentColor;border-radius:99px;padding:1px 8px;margin-top:3px}
+.pill.pend{color:var(--amber)} .pill.ok{color:var(--ok)}
+.empty{color:var(--muted);text-align:center;padding:12px;font-size:.92rem}
+.dock{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:5}
+.dock .in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.dock .btn{width:100%;font-size:1.02rem}
+.dock .msg{font-size:.82rem;color:var(--muted);text-align:center;min-height:1em}
+details summary{cursor:pointer;font-weight:600;padding:4px 0}
+details[open] summary{margin-bottom:8px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.confirm{display:flex;gap:6px;align-items:center;font-size:.85rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(120px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-fg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:6;max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="logo"><img src="icons/logo.png" alt="Gera Center"></span>
+    <div><h1>Gasolina no celular</h1><span class="ver" id="ver"></span></div>
+  </header>
+
+  <section class="panel" aria-labelledby="hCyc">
+    <div class="cycle">
+      <button class="sq" id="prev" aria-label="Ciclo anterior">‹</button>
+      <div class="mid"><b id="cycTitle">—</b><span id="cycRange" class="num"></span></div>
+      <button class="sq" id="next" aria-label="Próximo ciclo">›</button>
+    </div>
+    <div class="stats"><div><span class="label" id="hCyc">Lançado pelo celular</span><br><b class="num" id="tot">R$ 0,00</b></div>
+      <div style="text-align:right"><span class="label">Limite</span><br><b class="num" id="lim">R$ 500,00</b></div></div>
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <div class="hint" id="cycHint">Lançamentos feitos no computador não aparecem aqui.</div>
+  </section>
+
+  <section class="panel" aria-labelledby="hForm">
+    <h2 id="hForm">Novo abastecimento</h2>
+    <form id="form" novalidate>
+      <div class="f"><label class="label" for="iData">Data</label><input type="date" id="iData" required></div>
+      <div class="f"><label class="label" for="iValor">Valor (R$)</label><input id="iValor" inputmode="decimal" placeholder="0,00" autocomplete="off"></div>
+      <div class="f full"><label class="label" for="iPosto">Posto</label><input id="iPosto" placeholder="Ex.: Posto Shell Av. Paulista" autocomplete="off" list="postos"><datalist id="postos"></datalist></div>
+      <div class="f"><label class="label" for="iLitros">Litros</label><input id="iLitros" inputmode="decimal" placeholder="0,000" autocomplete="off"></div>
+      <div class="f"><label class="label" for="iComb">Combustível</label><select id="iComb"><option>Gasolina comum</option><option>Gasolina aditivada</option></select></div>
+      <div class="f"><label class="label" for="iKm">Km do veículo</label><input id="iKm" inputmode="numeric" placeholder="Opcional" autocomplete="off"></div>
+      <div class="f"><label class="label" for="iNf">Nº cupom / NF</label><input id="iNf" placeholder="Opcional" autocomplete="off"></div>
+      <div class="photo">
+        <span class="label">Cupom fiscal</span>
+        <div class="prev" id="prevBox" hidden><img id="prevImg" alt="Foto do cupom"><span class="pdf" id="prevPdf" hidden>PDF</span><span class="hint" id="prevName"></span><button type="button" class="link danger" id="btnPhotoDel">Remover</button></div>
+        <div class="row">
+          <button type="button" class="btn" id="btnCam"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg> Tirar foto</button>
+          <button type="button" class="btn" id="btnGal">Escolher arquivo</button>
+        </div>
+        <input type="file" id="fCam" accept="image/*" capture="environment" hidden>
+        <input type="file" id="fGal" accept="image/*,application/pdf" hidden>
+      </div>
+      <div class="err full" id="err" role="alert"></div>
+      <div class="actions"><button type="button" class="btn" id="btnCancel" hidden>Cancelar</button><button class="btn primary" type="submit" id="btnSave">Salvar no celular</button></div>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="hList">
+    <h2 id="hList">Lançamentos deste ciclo</h2>
+    <div id="list"></div>
+  </section>
+
+  <section class="panel">
+    <details id="help">
+      <summary>Como enviar para o computador</summary>
+      <ol class="steps">
+        <li>Lance os abastecimentos aqui. Eles ficam guardados no celular, mesmo sem internet.</li>
+        <li>Toque em <b>Enviar ao OneDrive</b>. Abre o menu de compartilhar do celular.</li>
+        <li><b>Android:</b> escolha <b>OneDrive</b>, entre na pasta <b>Relatório de Gasolina</b> (ou deixe na pasta inicial do OneDrive) e toque em <b>Carregar</b>.</li>
+        <li><b>iPhone:</b> escolha <b>Salvar em Arquivos</b>, toque em <b>OneDrive</b>, abra a pasta <b>Relatório de Gasolina</b> (ou deixe na pasta inicial do OneDrive) e toque em <b>Salvar</b>.</li>
+        <li>No computador, o programa <b>Relatório de Gasolina</b> importa sozinho os lançamentos e as fotos.</li>
+      </ol>
+    </details>
+    <details id="cfgBox">
+      <summary>Ajustes</summary>
+      <form id="cfg" novalidate>
+        <div class="f"><label class="label" for="cLim">Limite mensal (R$)</label><input id="cLim" inputmode="decimal"></div>
+        <div class="f"><label class="label" for="cFech">Dia de fechamento</label><input id="cFech" inputmode="numeric"></div>
+        <div class="actions"><button class="btn" type="submit">Salvar ajustes</button></div>
+        <div class="hint full" id="cMsg"></div>
+      </form>
+      <p class="hint">Os lançamentos ficam só neste celular até serem enviados. Os já enviados são apagados daqui depois de 90 dias.</p>
+    </details>
+  </section>
+</div>
+
+<div class="dock">
+  <div class="in">
+    <button class="btn brand" id="btnSend" disabled>Nada para enviar</button>
+    <div class="msg" id="sendMsg"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+const APPVER='1.0.0';
+const $=id=>document.getElementById(id);
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const n2=(v,d=2)=>v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const parseNum=s=>{s=String(s??'').trim().replace(/\s|R\$/g,'');if(!s)return NaN;if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');return Number(s)};
+const pad=x=>String(x).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fromIso=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const br=s=>{const [y,m,d]=s.split('-');return d+'/'+m+'/'+y};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('ver').textContent='versão '+APPVER;
+
+// ---------- ajustes ----------
+let cfg={limite:500,fech:25};
+try{const c=JSON.parse(localStorage.getItem('relgas.m.cfg')||'null');if(c)cfg={...cfg,...c}}catch(_){}
+function saveCfg(){try{localStorage.setItem('relgas.m.cfg',JSON.stringify(cfg))}catch(_){}}
+
+// ---------- ciclo (fecha no dia F; começa no dia F+1 do mês anterior) ----------
+function cycleKeyFor(d){let y=d.getFullYear(),m=d.getMonth();if(d.getDate()>cfg.fech){m++;if(m>11){m=0;y++}}return y+'-'+pad(m+1)}
+function cycleRange(k){const [y,m]=k.split('-').map(Number);return {start:new Date(y,m-2,cfg.fech+1),end:new Date(y,m-1,cfg.fech)}}
+function shiftKey(k,d){let [y,m]=k.split('-').map(Number);m+=d;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return y+'-'+pad(m)}
+let curKey=cycleKeyFor(new Date());
+
+// ---------- banco local (IndexedDB) ----------
+let db=null, items=[];
+function openDb(){return new Promise((ok,ko)=>{const r=indexedDB.open('relgas-celular',1);
+  r.onupgradeneeded=()=>{r.result.createObjectStore('itens',{keyPath:'id'})};r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)})}
+const tx=(mode,fn)=>new Promise((ok,ko)=>{const t=db.transaction('itens',mode);const st=t.objectStore('itens');const res=fn(st);t.oncomplete=()=>ok(res&&res.result);t.onerror=()=>ko(t.error)});
+const putItem=x=>tx('readwrite',st=>st.put(x));
+const delItem=id=>tx('readwrite',st=>st.delete(id));
+const allItems=()=>tx('readonly',st=>st.getAll());
+async function load(){items=(await allItems())||[];
+  // limpeza: enviados há mais de 90 dias
+  const lim=Date.now()-90*864e5;for(const x of items.filter(x=>x.enviado&&Date.parse(x.enviado)<lim))await delItem(x.id);
+  items=items.filter(x=>!(x.enviado&&Date.parse(x.enviado)<lim))}
+async function persistentStorage(){try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch(_){}}
+
+// ---------- foto ----------
+let photo=null; // {blob,tipo:'img'|'pdf',nome}
+const loadImg=src=>new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=src});
+async function toJpeg(file){const url=URL.createObjectURL(file);try{const img=await loadImg(url);
+  const k=Math.min(1,1800/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');
+  c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+  return await new Promise(r=>c.toBlob(r,'image/jpeg',.82))}finally{URL.revokeObjectURL(url)}}
+async function takeFile(f){if(!f)return;$('err').textContent='';
+  try{if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){if(f.size>10*1024*1024)throw new Error('PDF muito grande (máximo 10 MB).');photo={blob:f,tipo:'pdf',nome:f.name}}
+    else{const b=await toJpeg(f);if(!b)throw 0;photo={blob:b,tipo:'img',nome:f.name||'foto.jpg'}}}
+  catch(e){$('err').textContent=(e&&e.message)||'Não consegui ler essa imagem. Tente tirar a foto de novo.';photo=null}
+  showPhoto()}
+let prevUrl=null;
+function showPhoto(){if(prevUrl){URL.revokeObjectURL(prevUrl);prevUrl=null}
+  $('prevBox').hidden=!photo;if(!photo)return;
+  const isPdf=photo.tipo==='pdf';$('prevImg').hidden=isPdf;$('prevPdf').hidden=!isPdf;
+  if(!isPdf){prevUrl=URL.createObjectURL(photo.blob);$('prevImg').src=prevUrl}
+  $('prevName').textContent=isPdf?photo.nome:'Foto anexada ('+Math.round(photo.blob.size/1024)+' KB)'}
+$('btnCam').addEventListener('click',()=>$('fCam').click());
+$('btnGal').addEventListener('click',()=>$('fGal').click());
+$('fCam').addEventListener('change',e=>{takeFile(e.target.files[0]);e.target.value=''});
+$('fGal').addEventListener('change',e=>{takeFile(e.target.files[0]);e.target.value=''});
+$('btnPhotoDel').addEventListener('click',()=>{photo=null;showPhoto()});
+
+// ---------- formulário ----------
+let editingId=null;
+function defaultDate(){const {start,end}=cycleRange(curKey);const t=new Date();t.setHours(0,0,0,0);return iso(t<start?start:t>end?end:t)}
+function resetForm(){editingId=null;$('form').reset();$('iData').value=defaultDate();photo=null;showPhoto();$('err').textContent='';$('btnSave').textContent='Salvar no celular';$('btnCancel').hidden=true}
+$('btnCancel').addEventListener('click',()=>{resetForm();render()});
+$('form').addEventListener('submit',async e=>{e.preventDefault();
+  const err=m=>{$('err').textContent=m};
+  const data=$('iData').value,posto=$('iPosto').value.trim(),valor=parseNum($('iValor').value),litros=parseNum($('iLitros').value);
+  if(!data)return err('Informe a data.');
+  if(!posto)return err('Informe o nome do posto.');
+  if(!(valor>0))return err('Informe o valor pago, por exemplo 150,00.');
+  if($('iLitros').value.trim()&&!(litros>0))return err('Litros inválidos. Use vírgula para decimais, por exemplo 25,312.');
+  const old=editingId?items.find(x=>x.id===editingId):null;
+  const rec={id:old?old.id:'cel-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:old?old.ts:Date.now(),alterado:Date.now(),
+    data,posto,comb:$('iComb').value,valor:Math.round(valor*100)/100,litros:litros>0?litros:0,km:$('iKm').value.trim(),nf:$('iNf').value.trim(),
+    foto:photo?photo.blob:null,fotoTipo:photo?photo.tipo:null,fotoNome:photo?photo.nome:null,enviado:null};
+  try{await putItem(rec)}catch(_){return err('Não consegui salvar no celular. Verifique se há espaço livre.')}
+  if(old)items=items.map(x=>x.id===rec.id?rec:x);else items.push(rec);
+  const k=cycleKeyFor(fromIso(data));if(k!==curKey)curKey=k;
+  toast(old?'Alteração salva':'Abastecimento salvo no celular');resetForm();render();prepareShare();window.scrollTo({top:0,behavior:'smooth'})});
+
+// ---------- lista ----------
+let confirmId=null; const thumbUrls=[];
+function render(){
+  const {start,end}=cycleRange(curKey);const [y,m]=curKey.split('-').map(Number);
+  $('cycTitle').textContent='Fatura '+MESES[m-1]+'/'+y;$('cycRange').textContent=br(iso(start))+' a '+br(iso(end));
+  const it=items.filter(x=>cycleKeyFor(fromIso(x.data))===curKey).sort((a,b)=>b.data.localeCompare(a.data)||b.ts-a.ts);
+  const tot=it.reduce((s,x)=>s+x.valor,0);
+  $('tot').textContent=brl(tot);$('lim').textContent=brl(cfg.limite);
+  $('barFill').style.width=Math.min(100,cfg.limite?tot/cfg.limite*100:0)+'%';$('bar').classList.toggle('over',tot>cfg.limite);
+  thumbUrls.splice(0).forEach(u=>URL.revokeObjectURL(u));
+  if(!it.length){$('list').innerHTML='<div class="empty">Nenhum abastecimento lançado pelo celular neste ciclo.</div>'}
+  else $('list').innerHTML=it.map(x=>{let th='<div class="noimg">sem<br>cupom</div>';
+    if(x.foto&&x.fotoTipo==='img'){const u=URL.createObjectURL(x.foto);thumbUrls.push(u);th='<img src="'+u+'" alt="">'}else if(x.foto)th='<div class="noimg"><b>PDF</b></div>';
+    const act=confirmId===x.id?'<span class="confirm">Excluir? <button class="link danger" data-a="del" data-id="'+x.id+'">Sim</button><button class="link" data-a="no">Não</button></span>'
+      :'<button class="link" data-a="edit" data-id="'+x.id+'">Editar</button><button class="link danger" data-a="ask" data-id="'+x.id+'">Excluir</button>';
+    return '<div class="item">'+th+'<div><div class="t">'+esc(x.posto)+'</div><div class="s num">'+br(x.data)+(x.litros?' · '+n2(x.litros,3)+' L':'')+(x.nf?' · NF '+esc(x.nf):'')+'</div>'+
+      (x.enviado?'<span class="pill ok">Enviado '+new Date(x.enviado).toLocaleDateString('pt-BR')+'</span>':'<span class="pill pend">Falta enviar</span>')+'<div>'+act+'</div></div>'+
+      '<div class="v num">'+brl(x.valor)+'</div></div>'}).join('');
+  const postos=[...new Set(items.map(x=>x.posto))].slice(0,30);$('postos').innerHTML=postos.map(p=>'<option value="'+esc(p)+'">').join('');
+  updateDock();
+}
+$('list').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
+  if(a==='ask')confirmId=id;else if(a==='no')confirmId=null;
+  else if(a==='del'){await delItem(id);items=items.filter(x=>x.id!==id);confirmId=null;if(editingId===id)resetForm();prepareShare()}
+  else if(a==='edit'){const x=items.find(x=>x.id===id);if(!x)return;resetForm();editingId=id;
+    $('iData').value=x.data;$('iPosto').value=x.posto;$('iComb').value=x.comb;$('iValor').value=n2(x.valor);$('iLitros').value=x.litros?n2(x.litros,3):'';$('iKm').value=x.km||'';$('iNf').value=x.nf||'';
+    photo=x.foto?{blob:x.foto,tipo:x.fotoTipo,nome:x.fotoNome}:null;showPhoto();$('btnSave').textContent='Salvar alteração';$('btnCancel').hidden=false;
+    if(x.enviado)$('err').textContent='Este lançamento já foi enviado. Se alterar, ele será enviado de novo e o computador atualiza o registro.';
+    $('form').scrollIntoView({behavior:'smooth',block:'start'})}
+  render()});
+$('prev').addEventListener('click',()=>{curKey=shiftKey(curKey,-1);confirmId=null;if(!editingId)$('iData').value=defaultDate();render()});
+$('next').addEventListener('click',()=>{curKey=shiftKey(curKey,1);confirmId=null;if(!editingId)$('iData').value=defaultDate();render()});
+
+// ---------- envio (menu de compartilhar → OneDrive) ----------
+// O arquivo é preparado antes do toque: o iPhone só abre o compartilhar se for chamado na hora do toque.
+let shareFile=null, shareIds=[], preparing=null;
+const blobToB64=b=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=ko;r.readAsDataURL(b)});
+const pending=()=>items.filter(x=>!x.enviado);
+function updateDock(){const p=pending();const btn=$('btnSend');
+  if(!p.length){btn.disabled=true;btn.textContent='Tudo enviado';return}
+  btn.disabled=!shareFile;btn.textContent=shareFile?'Enviar '+p.length+' lançamento'+(p.length>1?'s':'')+' ao OneDrive':'Preparando…'}
+async function prepareShare(){shareFile=null;updateDock();const p=pending();if(!p.length)return;
+  const job=(async()=>{const itens=[];
+    for(const x of p.sort((a,b)=>a.data.localeCompare(b.data)))itens.push({id:x.id,data:x.data,posto:x.posto,combustivel:x.comb,litros:x.litros||0,valor:x.valor,km:x.km||'',cupom_nf:x.nf||'',alterado:x.alterado,
+      anexo:x.foto?{tipo:x.fotoTipo,nome:x.fotoNome,base64:await blobToB64(x.foto)}:null});
+    const d=new Date();const name='lancamentos-celular-'+iso(d)+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.txt';
+    const txt=JSON.stringify({app:'relgas-celular',versao:1,gerado_em:d.toISOString(),itens});
+    return {file:new File([txt],name,{type:'text/plain'}),ids:p.map(x=>x.id)}})();
+  preparing=job;const r=await job;if(preparing!==job)return;shareFile=r.file;shareIds=r.ids;updateDock()}
+async function markSent(ids){const now=new Date().toISOString();for(const x of items)if(ids.includes(x.id)){x.enviado=now;await putItem(x)}render();prepareShare()}
+let awaitingConfirm=false;
+$('btnSend').addEventListener('click',async()=>{if(!shareFile)return;const f=shareFile,ids=shareIds.slice();
+  if(awaitingConfirm){awaitingConfirm=false;await markSent(ids);$('sendMsg').textContent='Marcado como enviado. O computador importa ao abrir o programa.';return}
+  const canFiles=navigator.canShare&&navigator.canShare({files:[f]});
+  if(canFiles){
+    try{await navigator.share({files:[f],title:'Lançamentos de gasolina'});await markSent(ids);
+      $('sendMsg').textContent='Enviado. Confira se salvou na pasta do OneDrive.';toast('Enviado')}
+    catch(e){if(e&&e.name==='AbortError')$('sendMsg').textContent='Envio cancelado. Nada foi marcado como enviado.';
+      else $('sendMsg').textContent='O celular não conseguiu compartilhar ('+(e&&e.message||e)+').'}
+  }else{
+    // navegador sem compartilhar arquivos: baixa o arquivo para salvar no OneDrive manualmente
+    const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+    awaitingConfirm=true;$('btnSend').textContent='Já salvei no OneDrive';$('sendMsg').textContent='Arquivo baixado. Mova-o para a pasta do OneDrive e toque no botão acima.'}
+});
+
+// ---------- ajustes ----------
+function fillCfg(){$('cLim').value=n2(cfg.limite);$('cFech').value=cfg.fech}
+$('cfg').addEventListener('submit',e=>{e.preventDefault();const l=parseNum($('cLim').value),f=parseInt($('cFech').value,10);
+  if(!(l>0))return $('cMsg').textContent='Informe um limite válido.';if(!(f>=1&&f<=28))return $('cMsg').textContent='O dia de fechamento deve ficar entre 1 e 28.';
+  cfg={limite:l,fech:f};saveCfg();curKey=cycleKeyFor(new Date());$('cMsg').textContent='Ajustes salvos.';resetForm();render()});
+
+let toastT=null;function toast(t){$('toast').textContent=t;$('toast').hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>$('toast').hidden=true,2200)}
+
+// ---------- início ----------
+(async()=>{fillCfg();resetForm();
+  try{db=await openDb();await load();persistentStorage()}catch(e){$('err').textContent='Este navegador não permite guardar dados (modo anônimo?). Abra pelo navegador normal.'}
+  render();prepareShare();
+  if(!items.length)$('help').open=true;
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+})();
+</script>
+</body>
+</html>
